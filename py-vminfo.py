@@ -1,5 +1,7 @@
 """
-Python program for listing the vms on an ESX / vCenter host
+Python program that generates various statistics for one or more virtual machines
+
+A list of virtual machines can be provided as a comma separated list.
 """
 
 from optparse import OptionParser, make_option
@@ -23,7 +25,7 @@ def GetArgs():
     parser.add_argument('-o', '--port', type=int, default=443,    action='store', help='Port to connect on')
     parser.add_argument('-u', '--user', required=True, action='store', help='User name to use when connecting to host')
     parser.add_argument('-p', '--password', required=True, action='store', help='Password to use when connecting to host')
-    parser.add_argument('-m', '--vm', required=True, action='store', help='Virtual Machine to report on')
+    parser.add_argument('-m', '--vm', required=True, action='store', help='On eor more Virtual Machines to report on')
     parser.add_argument('-i', '--int', type=int, default=15, action='store', help='Interval to average the vSphere stats over')
     args = parser.parse_args()
     return args
