@@ -14,6 +14,7 @@ import argparse
 import atexit
 import sys
 import datetime
+import getpass
 
 
 def GetArgs():
@@ -24,7 +25,7 @@ def GetArgs():
     parser.add_argument('-s', '--host', required=True, action='store', help='Remote host to connect to')
     parser.add_argument('-o', '--port', type=int, default=443,    action='store', help='Port to connect on')
     parser.add_argument('-u', '--user', required=True, action='store', help='User name to use when connecting to host')
-    parser.add_argument('-p', '--password', required=True, action='store', help='Password to use when connecting to host')
+    parser.add_argument('-p', '--password', required=False, action='store', help='Password to use when connecting to host')
     parser.add_argument('-m', '--vm', required=True, action='store', help='On eor more Virtual Machines to report on')
     parser.add_argument('-i', '--int', type=int, default=15, action='store', help='Interval to average the vSphere stats over')
     args = parser.parse_args()
@@ -38,7 +39,7 @@ def BuildQuery(content,counterId,instance,vm,int):
     query = vim.PerformanceManager.QuerySpec(intervalId=20, entity=vm, metricId=[metricId], startTime=startTime, endTime=endTime)
     perfResults = perfManager.QueryPerf(querySpec=[query])
     return perfResults
-    
+
 def PrintVmInfo(vm,content,int):
     statInt = int * 3 #There are 3 20s samples in each minute
     summary = vm.summary
@@ -47,13 +48,13 @@ def PrintVmInfo(vm,content,int):
     if vm.resourceConfig.cpuAllocation.limit == -1: vmcpulimit = "None"
     else: vmcpulimit = "{} Mhz".format(vm.resourceConfig.cpuAllocation.limit)
     if vm.resourceConfig.memoryAllocation.limit == -1: vmmemlimit = "None"
-    else: vmmemlimit = "{} MB".format(vm.resourceConfig.cpuAllocation.limit)    
+    else: vmmemlimit = "{} MB".format(vm.resourceConfig.cpuAllocation.limit)
 
     if vm.resourceConfig.cpuAllocation.reservation == 0: vmcpures = "None"
     else: vmcpures = "{} Mhz".format(vm.resourceConfig.cpuAllocation.reservation)
     if vm.resourceConfig.memoryAllocation.reservation == 0: vmmemres = "None"
-    else: vmmemres = "{} MB".format(vm.resourceConfig.memoryAllocation.reservation)  
-    
+    else: vmmemres = "{} MB".format(vm.resourceConfig.memoryAllocation.reservation)
+
     #CPU Ready Average
     statCpuReady = BuildQuery(content,12,"",vm,int)
     cpuReady = (float(sum(statCpuReady[0].value[0].value))/statInt)
@@ -82,7 +83,7 @@ def PrintVmInfo(vm,content,int):
     DatastoreLatRead = (float(sum(statDatastoreLatRead[0].value[0].value))/statInt)
     statDatastoreLatWrite = BuildQuery(content,183,"*",vm,int)
     DatastoreLatWrite = (float(sum(statDatastoreLatWrite[0].value[0].value))/statInt)
-    
+
     print ""
     print "NOTE: Any VM statistics are averages of the last {} minutes".format(statInt/3)
     print ""
@@ -110,7 +111,7 @@ def PrintVmInfo(vm,content,int):
     print "[Host] CPU Usage               : Used: {} Mhz, Total: {} Mhz".format(summary.runtime.host.summary.quickStats.overallCpuUsage,
         (summary.runtime.host.summary.hardware.cpuMhz*summary.runtime.host.summary.hardware.numCpuCores))
     print "[Host] Memory Usage            : Used: {:.0f} GB, Total: {:.0f} GB".format(
-        (float(summary.runtime.host.summary.quickStats.overallMemoryUsage)/1024), 
+        (float(summary.runtime.host.summary.quickStats.overallMemoryUsage)/1024),
         (float(summary.runtime.host.summary.hardware.memorySize)/1024/1024/1024))
     print ""
 
@@ -119,10 +120,14 @@ def main():
     try:
         vmnames = args.vm
         si = None
+        if args.password:
+            password = args.password
+        else:
+            password = getpass.getpass(prompt='Enter password for host %s and user %s: ' % (args.host,args.user))
         try:
             si = SmartConnect(host=args.host,
                      user=args.user,
-                     pwd=args.password,
+                     pwd=password,
                      port=int(args.port))
         except IOError, e:
           pass
@@ -140,7 +145,7 @@ def main():
             if (vm.name in vmnames) and (vm.runtime.powerState == "poweredOn"):
                 vmObj = vm
                 PrintVmInfo(vmObj,content,args.int)
-            
+
     except vmodl.MethodFault, e:
         print "Caught vmodl fault : " + e.msg
         return -1
