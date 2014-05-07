@@ -123,7 +123,7 @@ def main():
         if args.password:
             password = args.password
         else:
-            password = getpass.getpass(prompt='Enter password for host %s and user %s: ' % (args.host,args.user))
+            password = getpass.getpass(prompt="Enter password for host {} and user {}: ".format(args.host,args.user))
         try:
             si = SmartConnect(host=args.host,
                      user=args.user,
