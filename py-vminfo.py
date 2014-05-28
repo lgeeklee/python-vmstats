@@ -40,7 +40,7 @@ def BuildQuery(content,counterId,instance,vm,int):
     perfResults = perfManager.QueryPerf(querySpec=[query])
     return perfResults
 
-def PrintVmInfo(vm,content,int):
+def PrintVmInfo(vm,content,int,perf_dict):
     statInt = int * 3 #There are 3 20s samples in each minute
     summary = vm.summary
 
@@ -56,32 +56,32 @@ def PrintVmInfo(vm,content,int):
     else: vmmemres = "{} MB".format(vm.resourceConfig.memoryAllocation.reservation)
 
     #CPU Ready Average
-    statCpuReady = BuildQuery(content,12,"",vm,int)
+    statCpuReady = BuildQuery(content,(StatCheck(perf_dict,'cpu.ready.summation')),"",vm,int)
     cpuReady = (float(sum(statCpuReady[0].value[0].value))/statInt)
     #CPU Usage Average % - NOTE: values are type LONG so needs divided by 100 for percentage
-    statCpuUsage = BuildQuery(content,2,"",vm,int)
+    statCpuUsage = BuildQuery(content,(StatCheck(perf_dict,'cpu.usage.average')),"",vm,int)
     cpuUsage = ((float(sum(statCpuUsage[0].value[0].value))/statInt)/100)
     #Memory Active Average MB
-    statMemoryActive = BuildQuery(content,33,"",vm,int)
+    statMemoryActive = BuildQuery(content,(StatCheck(perf_dict,'mem.active.average')),"",vm,int)
     memoryActive = (float(sum(statMemoryActive[0].value[0].value)/1024)/statInt)
     #Memory Shared
-    statMemoryShared = BuildQuery(content,37,"",vm,int)
+    statMemoryShared = BuildQuery(content,(StatCheck(perf_dict,'mem.shared.average')),"",vm,int)
     memoryShared = (float(sum(statMemoryShared[0].value[0].value)/1024)/statInt)
     #Memory Balloon
-    statMemoryBalloon = BuildQuery(content,90,"",vm,int)
+    statMemoryBalloon = BuildQuery(content,(StatCheck(perf_dict,'mem.vmmemctl.average')),"",vm,int)
     memoryBalloon = (float(sum(statMemoryBalloon[0].value[0].value)/1024)/statInt)
     #Memory Swapped
-    statMemorySwapped = BuildQuery(content,70,"",vm,int)
+    statMemorySwapped = BuildQuery(content,(StatCheck(perf_dict,'mem.swapped.average')),"",vm,int)
     memorySwapped = (float(sum(statMemorySwapped[0].value[0].value)/1024)/statInt)
     #Datastore Average IO
-    statDatastoreIoRead = BuildQuery(content,178,"*",vm,int)
+    statDatastoreIoRead = BuildQuery(content,(StatCheck(perf_dict,'datastore.numberReadAveraged.average')),"*",vm,int)
     DatastoreIoRead = (float(sum(statDatastoreIoRead[0].value[0].value))/statInt)
-    statDatastoreIoWrite = BuildQuery(content,179,"*",vm,int)
+    statDatastoreIoWrite = BuildQuery(content,(StatCheck(perf_dict,'datastore.numberWriteAveraged.average')),"*",vm,int)
     DatastoreIoWrite = (float(sum(statDatastoreIoWrite[0].value[0].value))/statInt)
     #Datastore Average Latency
-    statDatastoreLatRead = BuildQuery(content,182,"*",vm,int)
+    statDatastoreLatRead = BuildQuery(content,(StatCheck(perf_dict,'datastore.totalReadLatency.average')),"*",vm,int)
     DatastoreLatRead = (float(sum(statDatastoreLatRead[0].value[0].value))/statInt)
-    statDatastoreLatWrite = BuildQuery(content,183,"*",vm,int)
+    statDatastoreLatWrite = BuildQuery(content,(StatCheck(perf_dict,'datastore.totalWriteLatency.average')),"*",vm,int)
     DatastoreLatWrite = (float(sum(statDatastoreLatWrite[0].value[0].value))/statInt)
 
     print ""
@@ -115,6 +115,10 @@ def PrintVmInfo(vm,content,int):
         (float(summary.runtime.host.summary.hardware.memorySize)/1024/1024/1024))
     print ""
 
+def StatCheck(perf_dict,counter_name):
+    counter_key = perf_dict[counter_name]
+    return counter_key    
+    
 def main():
     args = GetArgs()
     try:
@@ -138,13 +142,21 @@ def main():
         atexit.register(Disconnect, si)
 
         content = si.RetrieveContent()
+        
+        #Get all the performance counters
+        perf_dict = {}
+        perfList = content.perfManager.perfCounter
+        for counter in perfList:
+            counter_full = "{}.{}.{}".format(counter.groupInfo.key,counter.nameInfo.key,counter.rollupType)
+            perf_dict[counter_full] = counter.key        
+        
         objView = content.viewManager.CreateContainerView(content.rootFolder,[vim.VirtualMachine],True)
         vmList = objView.view
         objView.Destroy()
         for vm in vmList:
             if (vm.name in vmnames) and (vm.runtime.powerState == "poweredOn"):
                 vmObj = vm
-                PrintVmInfo(vmObj,content,args.int)
+                PrintVmInfo(vmObj,content,args.int,perf_dict)
 
     except vmodl.MethodFault, e:
         print "Caught vmodl fault : " + e.msg
