@@ -151,7 +151,6 @@ def main():
             perf_dict[counter_full] = counter.key        
         
         #Build a view and get basic properties for all Virtual Machines
-        content = si.RetrieveContent()
         objView = content.viewManager.CreateContainerView(content.rootFolder,[vim.VirtualMachine],True)
         tSpec = vim.PropertyCollector.TraversalSpec(name='tSpecName', path='view', skip=False, type=vim.view.ContainerView)
         pSpec = vim.PropertyCollector.PropertySpec(all=False, pathSet=['name','runtime.powerState','summary.config.uuid'],type=vim.VirtualMachine)
