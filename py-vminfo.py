@@ -150,13 +150,21 @@ def main():
             counter_full = "{}.{}.{}".format(counter.groupInfo.key,counter.nameInfo.key,counter.rollupType)
             perf_dict[counter_full] = counter.key        
         
+        #Build a view and get basic properties for all Virtual Machines
+        content = si.RetrieveContent()
         objView = content.viewManager.CreateContainerView(content.rootFolder,[vim.VirtualMachine],True)
-        vmList = objView.view
+        tSpec = vim.PropertyCollector.TraversalSpec(name='tSpecName', path='view', skip=False, type=vim.view.ContainerView)
+        pSpec = vim.PropertyCollector.PropertySpec(all=False, pathSet=['name','runtime.powerState','summary.config.uuid'],type=vim.VirtualMachine)
+        oSpec = vim.PropertyCollector.ObjectSpec(obj=objView,selectSet=[tSpec],skip=False)
+        pfSpec = vim.PropertyCollector.FilterSpec(objectSet=[oSpec], propSet=[pSpec], reportMissingObjectsInResults=False)
+        retProps = content.propertyCollector.RetrieveProperties(specSet=[pfSpec])
         objView.Destroy()
-        for vm in vmList:
-            if (vm.name in vmnames) and (vm.runtime.powerState == "poweredOn"):
-                vmObj = vm
-                PrintVmInfo(vmObj,content,args.int,perf_dict)
+        
+        #Find VM supplied as arg and use UUID to get the Managed Object
+        for vm in retProps:
+            if (vm.propSet[0].val in vmnames) and (vm.propSet[1].val == "poweredOn"):
+                objViewVm = content.searchIndex.FindByUuid(uuid=vm.propSet[2].val,vmSearch=True)
+                PrintVmInfo(objViewVm,content,args.int,perf_dict)
 
     except vmodl.MethodFault, e:
         print "Caught vmodl fault : " + e.msg
@@ -171,3 +179,4 @@ def main():
 # Start program
 if __name__ == "__main__":
     main()
+
