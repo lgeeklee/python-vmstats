@@ -117,7 +117,28 @@ def PrintVmInfo(vm,content,int,perf_dict):
 
 def StatCheck(perf_dict,counter_name):
     counter_key = perf_dict[counter_name]
-    return counter_key    
+    return counter_key
+
+def GetProperties(content,viewType,props,specType):
+    #Build a view and get basic properties for all Virtual Machines
+    objView = content.viewManager.CreateContainerView(content.rootFolder,viewType,True)
+    tSpec = vim.PropertyCollector.TraversalSpec(name='tSpecName', path='view', skip=False, type=vim.view.ContainerView)
+    pSpec = vim.PropertyCollector.PropertySpec(all=False, pathSet=props,type=specType)
+    oSpec = vim.PropertyCollector.ObjectSpec(obj=objView,selectSet=[tSpec],skip=False)
+    pfSpec = vim.PropertyCollector.FilterSpec(objectSet=[oSpec], propSet=[pSpec], reportMissingObjectsInResults=False)
+    retProps = content.propertyCollector.RetrieveProperties(specSet=[pfSpec])
+    objView.Destroy()
+
+    gpOutput = []
+    for eachProp in retProps:
+        propDic = {}
+        for prop in eachProp.propSet:
+            propDic[prop.name] = prop.val
+        
+        propDic['moref'] = eachProp.obj
+        gpOutput.append(propDic)
+  
+    return gpOutput    
     
 def main():
     args = GetArgs()
@@ -148,22 +169,14 @@ def main():
         perfList = content.perfManager.perfCounter
         for counter in perfList:
             counter_full = "{}.{}.{}".format(counter.groupInfo.key,counter.nameInfo.key,counter.rollupType)
-            perf_dict[counter_full] = counter.key        
+            perf_dict[counter_full] = counter.key
         
-        #Build a view and get basic properties for all Virtual Machines
-        objView = content.viewManager.CreateContainerView(content.rootFolder,[vim.VirtualMachine],True)
-        tSpec = vim.PropertyCollector.TraversalSpec(name='tSpecName', path='view', skip=False, type=vim.view.ContainerView)
-        pSpec = vim.PropertyCollector.PropertySpec(all=False, pathSet=['name','runtime.powerState','summary.config.uuid'],type=vim.VirtualMachine)
-        oSpec = vim.PropertyCollector.ObjectSpec(obj=objView,selectSet=[tSpec],skip=False)
-        pfSpec = vim.PropertyCollector.FilterSpec(objectSet=[oSpec], propSet=[pSpec], reportMissingObjectsInResults=False)
-        retProps = content.propertyCollector.RetrieveProperties(specSet=[pfSpec])
-        objView.Destroy()
-        
-        #Find VM supplied as arg and use UUID to get the Managed Object
+        retProps = GetProperties(content,[vim.VirtualMachine],['name','runtime.powerState','summary.config.uuid'],vim.VirtualMachine)
+
+        #Find VM supplied as arg and use Managed Object Reference (moref) for the PrintVmInfo
         for vm in retProps:
-            if (vm.propSet[0].val in vmnames) and (vm.propSet[1].val == "poweredOn"):
-                objViewVm = content.searchIndex.FindByUuid(uuid=vm.propSet[2].val,vmSearch=True)
-                PrintVmInfo(objViewVm,content,args.int,perf_dict)
+            if (vm['name'] in vmnames) and (vm['runtime.powerState'] == "poweredOn"):
+                PrintVmInfo(vm['moref'],content,args.int,perf_dict)
 
     except vmodl.MethodFault, e:
         print "Caught vmodl fault : " + e.msg
@@ -178,4 +191,5 @@ def main():
 # Start program
 if __name__ == "__main__":
     main()
+
 
