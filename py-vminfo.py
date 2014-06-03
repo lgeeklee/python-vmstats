@@ -171,7 +171,7 @@ def main():
             counter_full = "{}.{}.{}".format(counter.groupInfo.key,counter.nameInfo.key,counter.rollupType)
             perf_dict[counter_full] = counter.key
         
-        retProps = GetProperties(content,[vim.VirtualMachine],['name','runtime.powerState','summary.config.uuid'],vim.VirtualMachine)
+        retProps = GetProperties(content,[vim.VirtualMachine],['name','runtime.powerState'],vim.VirtualMachine)
 
         #Find VM supplied as arg and use Managed Object Reference (moref) for the PrintVmInfo
         for vm in retProps:
