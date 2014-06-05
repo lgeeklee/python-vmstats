@@ -19,3 +19,5 @@ The script requires the following parameters:
 The -p/--password is now optional and if not provided on the command line will prompt instead.
 
 http://www.geeklee.co.uk/2014/04/23/python-pyvmomi-get-vm-statistics-from-hypervisor/
+
+http://www.geeklee.co.uk/object-properties-containerview-pyvmomi/
