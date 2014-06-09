@@ -201,10 +201,10 @@ def main():
             if (vm['name'] in vmnames) and (vm['runtime.powerState'] == "poweredOn"):
                 PrintVmInfo(vm['moref'], content, args.int, perf_dict)
 
-    except vmodl.MethodFault, e:
+    except vmodl.MethodFault as e:
         print('Caught vmodl fault : ' + e.msg)
         return -1
-    except Exception, e:
+    except Exception as e:
         print('Caught exception : ' + str(e))
         return -1
 
