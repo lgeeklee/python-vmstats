@@ -155,7 +155,7 @@ def GetProperties(content, viewType, props, specType):
     objView.Destroy()
     # Turn the output in retProps into a usable dictionary of values
     gpOutput = []
-    for eachProp in retProps.objects:
+    for eachProp in retProps:
         propDic = {}
         for prop in eachProp.propSet:
             propDic[prop.name] = prop.val
