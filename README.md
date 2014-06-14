@@ -13,7 +13,7 @@ The script requires the following parameters:
 
 -m VM, --vm VM : Virtual Machine to report.
 
--i INT, --int INT : Interval to average the vSphere stats over in minutes
+-i INT, --interval INT : Interval to average the vSphere stats over in minutes
 
 
 The -p/--password is now optional and if not provided on the command line will prompt instead.
