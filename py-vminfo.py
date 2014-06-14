@@ -156,7 +156,6 @@ def GetProperties(content, viewType, props, specType):
     retProps = content.propertyCollector.RetrievePropertiesEx(specSet=[pfSpec], options=retOptions)
     totalProps += retProps.objects
     while retProps.token:
-        print(retProps.token)
         retProps = content.propertyCollector.ContinueRetrievePropertiesEx(token=retProps.token)
         totalProps += retProps.objects
     objView.Destroy()
