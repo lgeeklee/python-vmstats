@@ -27,16 +27,16 @@ def GetArgs():
     parser.add_argument('-p', '--password', required=False, action='store',
                         help='Password to use when connecting to host')
     parser.add_argument('-m', '--vm', required=True, action='store', help='On eor more Virtual Machines to report on')
-    parser.add_argument('-i', '--int', type=int, default=15, action='store',
+    parser.add_argument('-i', '--interval', type=int, default=15, action='store',
                         help='Interval to average the vSphere stats over')
     args = parser.parse_args()
     return args
 
 
-def BuildQuery(content, counterId, instance, vm, int):
+def BuildQuery(content, counterId, instance, vm, interval):
     perfManager = content.perfManager
     metricId = vim.PerformanceManager.MetricId(counterId=counterId, instance=instance)
-    startTime = datetime.now() - timedelta(minutes=(int + 1))
+    startTime = datetime.now() - timedelta(minutes=(interval + 1))
     endTime = datetime.now() - timedelta(minutes=1)
     query = vim.PerformanceManager.QuerySpec(intervalId=20, entity=vm, metricId=[metricId], startTime=startTime,
                                              endTime=endTime)
@@ -44,8 +44,8 @@ def BuildQuery(content, counterId, instance, vm, int):
     return perfResults
 
 
-def PrintVmInfo(vm, content, int, perf_dict):
-    statInt = int * 3  # There are 3 20s samples in each minute
+def PrintVmInfo(vm, content, interval, perf_dict):
+    statInt = interval * 3  # There are 3 20s samples in each minute
     summary = vm.summary
 
     # Convert limit and reservation values from -1 to None
@@ -68,36 +68,36 @@ def PrintVmInfo(vm, content, int, perf_dict):
         vmmemres = "{} MB".format(vm.resourceConfig.memoryAllocation.reservation)
 
     #CPU Ready Average
-    statCpuReady = BuildQuery(content, (StatCheck(perf_dict, 'cpu.ready.summation')), "", vm, int)
+    statCpuReady = BuildQuery(content, (StatCheck(perf_dict, 'cpu.ready.summation')), "", vm, interval)
     cpuReady = (float(sum(statCpuReady[0].value[0].value)) / statInt)
     #CPU Usage Average % - NOTE: values are type LONG so needs divided by 100 for percentage
-    statCpuUsage = BuildQuery(content, (StatCheck(perf_dict, 'cpu.usage.average')), "", vm, int)
+    statCpuUsage = BuildQuery(content, (StatCheck(perf_dict, 'cpu.usage.average')), "", vm, interval)
     cpuUsage = ((float(sum(statCpuUsage[0].value[0].value)) / statInt) / 100)
     #Memory Active Average MB
-    statMemoryActive = BuildQuery(content, (StatCheck(perf_dict, 'mem.active.average')), "", vm, int)
+    statMemoryActive = BuildQuery(content, (StatCheck(perf_dict, 'mem.active.average')), "", vm, interval)
     memoryActive = (float(sum(statMemoryActive[0].value[0].value) / 1024) / statInt)
     #Memory Shared
-    statMemoryShared = BuildQuery(content, (StatCheck(perf_dict, 'mem.shared.average')), "", vm, int)
+    statMemoryShared = BuildQuery(content, (StatCheck(perf_dict, 'mem.shared.average')), "", vm, interval)
     memoryShared = (float(sum(statMemoryShared[0].value[0].value) / 1024) / statInt)
     #Memory Balloon
-    statMemoryBalloon = BuildQuery(content, (StatCheck(perf_dict, 'mem.vmmemctl.average')), "", vm, int)
+    statMemoryBalloon = BuildQuery(content, (StatCheck(perf_dict, 'mem.vmmemctl.average')), "", vm, interval)
     memoryBalloon = (float(sum(statMemoryBalloon[0].value[0].value) / 1024) / statInt)
     #Memory Swapped
-    statMemorySwapped = BuildQuery(content, (StatCheck(perf_dict, 'mem.swapped.average')), "", vm, int)
+    statMemorySwapped = BuildQuery(content, (StatCheck(perf_dict, 'mem.swapped.average')), "", vm, interval)
     memorySwapped = (float(sum(statMemorySwapped[0].value[0].value) / 1024) / statInt)
     #Datastore Average IO
     statDatastoreIoRead = BuildQuery(content, (StatCheck(perf_dict, 'datastore.numberReadAveraged.average')),
-                                     "*", vm, int)
+                                     "*", vm, interval)
     DatastoreIoRead = (float(sum(statDatastoreIoRead[0].value[0].value)) / statInt)
     statDatastoreIoWrite = BuildQuery(content, (StatCheck(perf_dict, 'datastore.numberWriteAveraged.average')),
-                                      "*", vm, int)
+                                      "*", vm, interval)
     DatastoreIoWrite = (float(sum(statDatastoreIoWrite[0].value[0].value)) / statInt)
     #Datastore Average Latency
     statDatastoreLatRead = BuildQuery(content, (StatCheck(perf_dict, 'datastore.totalReadLatency.average')),
-                                      "*", vm, int)
+                                      "*", vm, interval)
     DatastoreLatRead = (float(sum(statDatastoreLatRead[0].value[0].value)) / statInt)
     statDatastoreLatWrite = BuildQuery(content, (StatCheck(perf_dict, 'datastore.totalWriteLatency.average')),
-                                       "*", vm, int)
+                                       "*", vm, interval)
     DatastoreLatWrite = (float(sum(statDatastoreLatWrite[0].value[0].value)) / statInt)
 
     print('\nNOTE: Any VM statistics are averages of the last {} minutes\n'.format(statInt / 3))
@@ -151,11 +151,18 @@ def GetProperties(content, viewType, props, specType):
     pSpec = vim.PropertyCollector.PropertySpec(all=False, pathSet=props, type=specType)
     oSpec = vim.PropertyCollector.ObjectSpec(obj=objView, selectSet=[tSpec], skip=False)
     pfSpec = vim.PropertyCollector.FilterSpec(objectSet=[oSpec], propSet=[pSpec], reportMissingObjectsInResults=False)
-    retProps = content.propertyCollector.RetrieveProperties(specSet=[pfSpec])
+    retOptions = vim.PropertyCollector.RetrieveOptions()
+    totalProps = []
+    retProps = content.propertyCollector.RetrievePropertiesEx(specSet=[pfSpec], options=retOptions)
+    totalProps += retProps.objects
+    while retProps.token:
+        print(retProps.token)
+        retProps = content.propertyCollector.ContinueRetrievePropertiesEx(token=retProps.token)
+        totalProps += retProps.objects
     objView.Destroy()
     # Turn the output in retProps into a usable dictionary of values
     gpOutput = []
-    for eachProp in retProps:
+    for eachProp in retProps.objects:
         propDic = {}
         for prop in eachProp.propSet:
             propDic[prop.name] = prop.val
@@ -199,7 +206,7 @@ def main():
         #Find VM supplied as arg and use Managed Object Reference (moref) for the PrintVmInfo
         for vm in retProps:
             if (vm['name'] in vmnames) and (vm['runtime.powerState'] == "poweredOn"):
-                PrintVmInfo(vm['moref'], content, args.int, perf_dict)
+                PrintVmInfo(vm['moref'], content, args.interval, perf_dict)
 
     except vmodl.MethodFault as e:
         print('Caught vmodl fault : ' + e.msg)
