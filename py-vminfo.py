@@ -128,15 +128,13 @@ def PrintVmInfo(vm, content, interval, perf_dict):
                                                                                       DatastoreLatWrite))
     print('[Host] Name                    : {}'.format(summary.runtime.host.name))
     print('[Host] CPU Detail              : Processor Sockets: {}, Cores per Socket {}'.format(
-        summary.runtime.host.summary.hardware.numCpuPkgs,
-        (summary.runtime.host.summary.hardware.numCpuCores / summary.runtime.host.summary.hardware.numCpuPkgs)))
-    print('[Host] CPU Type                : {}'.format(summary.runtime.host.summary.hardware.cpuModel))
+        summary.hardware.numCpuPkgs, (summary.hardware.numCpuCores / summary.hardware.numCpuPkgs)))
+    print('[Host] CPU Type                : {}'.format(summary.hardware.cpuModel))
     print('[Host] CPU Usage               : Used: {} Mhz, Total: {} Mhz'.format(
-        summary.runtime.host.summary.quickStats.overallCpuUsage,
-        (summary.runtime.host.summary.hardware.cpuMhz * summary.runtime.host.summary.hardware.numCpuCores)))
+        summary.quickStats.overallCpuUsage, (summary.hardware.cpuMhz * summary.hardware.numCpuCores)))
     print('[Host] Memory Usage            : Used: {:.0f} GB, Total: {:.0f} GB\n'.format(
-        (float(summary.runtime.host.summary.quickStats.overallMemoryUsage) / 1024),
-        (float(summary.runtime.host.summary.hardware.memorySize) / 1024 / 1024 / 1024)))
+        (float(summary.quickStats.overallMemoryUsage) / 1024),
+        (float(summary.hardware.memorySize) / 1024 / 1024 / 1024)))
 
 
 def StatCheck(perf_dict, counter_name):
