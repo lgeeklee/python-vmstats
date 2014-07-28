@@ -100,6 +100,14 @@ def PrintVmInfo(vm, content, interval, perf_dict):
                                        "*", vm, interval)
     DatastoreLatWrite = (float(sum(statDatastoreLatWrite[0].value[0].value)) / statInt)
 
+    #Network usage (Tx/Rx)
+    statNetworkTx = BuildQuery(content, (StatCheck(perf_dict, 'net.transmitted.average')),
+                               "", vm, interval)
+    networkTx = (float(sum(statNetworkTx[0].value[0].value) * 8 / 1024) / statInt)
+    statNetworkRx = BuildQuery(content, (StatCheck(perf_dict, 'net.received.average')),
+                               "", vm, interval)
+    networkRx = (float(sum(statNetworkRx[0].value[0].value) * 8 / 1024) / statInt)
+
     print('\nNOTE: Any VM statistics are averages of the last {} minutes\n'.format(statInt / 3))
     print('Server Name                    :', summary.config.name)
     print('Description                    :', summary.config.annotation)
@@ -126,6 +134,7 @@ def PrintVmInfo(vm, content, interval, perf_dict):
                                                                                           DatastoreIoWrite))
     print('[VM] Datastore Average Latency : Read: {:.0f} ms, Write: {:.0f} ms'.format(DatastoreLatRead,
                                                                                       DatastoreLatWrite))
+    print('[VM] Network Usage             : Transmitted {:.3f} Mbps, Received {:.3f} Mbps'.format(networkTx, networkRx))
     print('[Host] Name                    : {}'.format(summary.runtime.host.name))
     print('[Host] CPU Detail              : Processor Sockets: {}, Cores per Socket {}'.format(
         summary.runtime.host.summary.hardware.numCpuPkgs,
