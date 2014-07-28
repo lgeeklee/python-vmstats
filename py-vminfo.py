@@ -101,11 +101,9 @@ def PrintVmInfo(vm, content, interval, perf_dict):
     DatastoreLatWrite = (float(sum(statDatastoreLatWrite[0].value[0].value)) / statInt)
 
     #Network usage (Tx/Rx)
-    statNetworkTx = BuildQuery(content, (StatCheck(perf_dict, 'net.transmitted.average')),
-                               "", vm, interval)
+    statNetworkTx = BuildQuery(content, (StatCheck(perf_dict, 'net.transmitted.average')), "", vm, interval)
     networkTx = (float(sum(statNetworkTx[0].value[0].value) * 8 / 1024) / statInt)
-    statNetworkRx = BuildQuery(content, (StatCheck(perf_dict, 'net.received.average')),
-                               "", vm, interval)
+    statNetworkRx = BuildQuery(content, (StatCheck(perf_dict, 'net.received.average')), "", vm, interval)
     networkRx = (float(sum(statNetworkRx[0].value[0].value) * 8 / 1024) / statInt)
 
     print('\nNOTE: Any VM statistics are averages of the last {} minutes\n'.format(statInt / 3))
