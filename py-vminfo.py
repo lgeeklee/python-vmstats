@@ -41,7 +41,12 @@ def BuildQuery(content, counterId, instance, vm, interval):
     query = vim.PerformanceManager.QuerySpec(intervalId=20, entity=vm, metricId=[metricId], startTime=startTime,
                                              endTime=endTime)
     perfResults = perfManager.QueryPerf(querySpec=[query])
-    return perfResults
+    if perfResults:
+        return perfResults
+    else:
+        print('ERROR: Performance results empty')
+        exit()
+
 
 
 def PrintVmInfo(vm, content, interval, perf_dict):
@@ -213,6 +218,8 @@ def main():
         for vm in retProps:
             if (vm['name'] in vmnames) and (vm['runtime.powerState'] == "poweredOn"):
                 PrintVmInfo(vm['moref'], content, args.interval, perf_dict)
+            else:
+                print('ERROR: Problem connecting to Virtual Machine.  {} is likely powered off or suspended'.format(vm))
 
     except vmodl.MethodFault as e:
         print('Caught vmodl fault : ' + e.msg)
