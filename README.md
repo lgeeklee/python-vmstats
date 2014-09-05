@@ -3,6 +3,8 @@ python-vmstats
 
 Python script using pyVmomi to get VM statistics
 
+<img src="http://www.geeklee.co.uk/wp-content/uploads/2014/04/vm-win-stats-py2.png" alt="Example output">
+
 The script requires the following parameters:
 
 -s HOST, --host HOST : Remote host to connect to.
