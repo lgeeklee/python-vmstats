@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 Python program that generates various statistics for one or more virtual machines
 
