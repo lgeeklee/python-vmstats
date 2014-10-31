@@ -14,7 +14,7 @@ from datetime import timedelta, datetime
 
 import argparse
 import atexit
-import sys
+import pytz
 import getpass
 
 
@@ -38,8 +38,8 @@ def GetArgs():
 def BuildQuery(content, counterId, instance, vm, interval):
     perfManager = content.perfManager
     metricId = vim.PerformanceManager.MetricId(counterId=counterId, instance=instance)
-    startTime = datetime.now() - timedelta(minutes=(interval + 1))
-    endTime = datetime.now() - timedelta(minutes=1)
+    startTime = (datetime.now() - timedelta(minutes=(interval + 1))).replace(tzinfo=pytz.utc)
+    endTime = (datetime.now() - timedelta(minutes=1)).replace(tzinfo=pytz.utc)
     query = vim.PerformanceManager.QuerySpec(intervalId=20, entity=vm, metricId=[metricId], startTime=startTime,
                                              endTime=endTime)
     perfResults = perfManager.QueryPerf(querySpec=[query])
