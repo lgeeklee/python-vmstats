@@ -7,7 +7,6 @@ A list of virtual machines can be provided as a comma separated list.
 """
 
 from __future__ import print_function
-from optparse import OptionParser, make_option
 from pyVim.connect import SmartConnect, Disconnect
 from pyVmomi import vmodl, vim
 from datetime import timedelta, datetime
@@ -34,23 +33,28 @@ def GetArgs():
     return args
 
 
-def BuildQuery(content, counterId, instance, vm, interval):
+def BuildQuery(content, vchtime, counterId, instance, vm, interval):
     perfManager = content.perfManager
     metricId = vim.PerformanceManager.MetricId(counterId=counterId, instance=instance)
-    startTime = datetime.now() - timedelta(minutes=(interval + 1))
-    endTime = datetime.now() - timedelta(minutes=1)
+    startTime = vchtime - timedelta(minutes=(interval + 1))
+    endTime = vchtime - timedelta(minutes=1)
     query = vim.PerformanceManager.QuerySpec(intervalId=20, entity=vm, metricId=[metricId], startTime=startTime,
                                              endTime=endTime)
     perfResults = perfManager.QueryPerf(querySpec=[query])
     if perfResults:
         return perfResults
     else:
-        print('ERROR: Performance results empty')
+        print('ERROR: Performance results empty.  TIP: Check time drift on source and vCenter server')
+        print('Troubleshooting info:')
+        print('vCenter/host date and time: {}'.format(vchtime))
+        print('Start perf counter time   :  {}'.format(startTime))
+        print('End perf counter time     :  {}'.format(endTime))
+        print(query)
         exit()
 
 
 
-def PrintVmInfo(vm, content, interval, perf_dict):
+def PrintVmInfo(vm, content, vchtime, interval, perf_dict, ):
     statInt = interval * 3  # There are 3 20s samples in each minute
     summary = vm.summary
 
@@ -74,42 +78,42 @@ def PrintVmInfo(vm, content, interval, perf_dict):
         vmmemres = "{} MB".format(vm.resourceConfig.memoryAllocation.reservation)
 
     #CPU Ready Average
-    statCpuReady = BuildQuery(content, (StatCheck(perf_dict, 'cpu.ready.summation')), "", vm, interval)
+    statCpuReady = BuildQuery(content, vchtime, (StatCheck(perf_dict, 'cpu.ready.summation')), "", vm, interval)
     cpuReady = (float(sum(statCpuReady[0].value[0].value)) / statInt)
     #CPU Usage Average % - NOTE: values are type LONG so needs divided by 100 for percentage
-    statCpuUsage = BuildQuery(content, (StatCheck(perf_dict, 'cpu.usage.average')), "", vm, interval)
+    statCpuUsage = BuildQuery(content, vchtime, (StatCheck(perf_dict, 'cpu.usage.average')), "", vm, interval)
     cpuUsage = ((float(sum(statCpuUsage[0].value[0].value)) / statInt) / 100)
     #Memory Active Average MB
-    statMemoryActive = BuildQuery(content, (StatCheck(perf_dict, 'mem.active.average')), "", vm, interval)
+    statMemoryActive = BuildQuery(content, vchtime, (StatCheck(perf_dict, 'mem.active.average')), "", vm, interval)
     memoryActive = (float(sum(statMemoryActive[0].value[0].value) / 1024) / statInt)
     #Memory Shared
-    statMemoryShared = BuildQuery(content, (StatCheck(perf_dict, 'mem.shared.average')), "", vm, interval)
+    statMemoryShared = BuildQuery(content, vchtime, (StatCheck(perf_dict, 'mem.shared.average')), "", vm, interval)
     memoryShared = (float(sum(statMemoryShared[0].value[0].value) / 1024) / statInt)
     #Memory Balloon
-    statMemoryBalloon = BuildQuery(content, (StatCheck(perf_dict, 'mem.vmmemctl.average')), "", vm, interval)
+    statMemoryBalloon = BuildQuery(content, vchtime, (StatCheck(perf_dict, 'mem.vmmemctl.average')), "", vm, interval)
     memoryBalloon = (float(sum(statMemoryBalloon[0].value[0].value) / 1024) / statInt)
     #Memory Swapped
-    statMemorySwapped = BuildQuery(content, (StatCheck(perf_dict, 'mem.swapped.average')), "", vm, interval)
+    statMemorySwapped = BuildQuery(content, vchtime, (StatCheck(perf_dict, 'mem.swapped.average')), "", vm, interval)
     memorySwapped = (float(sum(statMemorySwapped[0].value[0].value) / 1024) / statInt)
     #Datastore Average IO
-    statDatastoreIoRead = BuildQuery(content, (StatCheck(perf_dict, 'datastore.numberReadAveraged.average')),
+    statDatastoreIoRead = BuildQuery(content, vchtime, (StatCheck(perf_dict, 'datastore.numberReadAveraged.average')),
                                      "*", vm, interval)
     DatastoreIoRead = (float(sum(statDatastoreIoRead[0].value[0].value)) / statInt)
-    statDatastoreIoWrite = BuildQuery(content, (StatCheck(perf_dict, 'datastore.numberWriteAveraged.average')),
+    statDatastoreIoWrite = BuildQuery(content, vchtime, (StatCheck(perf_dict, 'datastore.numberWriteAveraged.average')),
                                       "*", vm, interval)
     DatastoreIoWrite = (float(sum(statDatastoreIoWrite[0].value[0].value)) / statInt)
     #Datastore Average Latency
-    statDatastoreLatRead = BuildQuery(content, (StatCheck(perf_dict, 'datastore.totalReadLatency.average')),
+    statDatastoreLatRead = BuildQuery(content, vchtime, (StatCheck(perf_dict, 'datastore.totalReadLatency.average')),
                                       "*", vm, interval)
     DatastoreLatRead = (float(sum(statDatastoreLatRead[0].value[0].value)) / statInt)
-    statDatastoreLatWrite = BuildQuery(content, (StatCheck(perf_dict, 'datastore.totalWriteLatency.average')),
+    statDatastoreLatWrite = BuildQuery(content, vchtime, (StatCheck(perf_dict, 'datastore.totalWriteLatency.average')),
                                        "*", vm, interval)
     DatastoreLatWrite = (float(sum(statDatastoreLatWrite[0].value[0].value)) / statInt)
 
     #Network usage (Tx/Rx)
-    statNetworkTx = BuildQuery(content, (StatCheck(perf_dict, 'net.transmitted.average')), "", vm, interval)
+    statNetworkTx = BuildQuery(content, vchtime, (StatCheck(perf_dict, 'net.transmitted.average')), "", vm, interval)
     networkTx = (float(sum(statNetworkTx[0].value[0].value) * 8 / 1024) / statInt)
-    statNetworkRx = BuildQuery(content, (StatCheck(perf_dict, 'net.received.average')), "", vm, interval)
+    statNetworkRx = BuildQuery(content, vchtime, (StatCheck(perf_dict, 'net.received.average')), "", vm, interval)
     networkRx = (float(sum(statNetworkRx[0].value[0].value) * 8 / 1024) / statInt)
 
     print('\nNOTE: Any VM statistics are averages of the last {} minutes\n'.format(statInt / 3))
@@ -205,6 +209,8 @@ def main():
 
         atexit.register(Disconnect, si)
         content = si.RetrieveContent()
+        # Get vCenter date and time for use as baseline when querying for counters
+        vchtime = si.CurrentTime()
 
         # Get all the performance counters
         perf_dict = {}
@@ -218,7 +224,7 @@ def main():
         #Find VM supplied as arg and use Managed Object Reference (moref) for the PrintVmInfo
         for vm in retProps:
             if (vm['name'] in vmnames) and (vm['runtime.powerState'] == "poweredOn"):
-                PrintVmInfo(vm['moref'], content, args.interval, perf_dict)
+                PrintVmInfo(vm['moref'], content, vchtime, args.interval, perf_dict)
             elif vm['name'] in vmnames:
                 print('ERROR: Problem connecting to Virtual Machine.  {} is likely powered off or suspended'.format(vm['name']))
 
