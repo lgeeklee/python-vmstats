@@ -129,7 +129,7 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict, ):
                                                                                            statCpuReady[0].value[
                                                                                                0].value)) / 20000 * 100))))
     print('[VM] CPU (%)                   : {:.0f} %'.format(cpuUsage))
-    print('[VM] Memory                    : {:.0f} GB'.format(float(summary.config.memorySizeMB) / 1024))
+    print('[VM] Memory                    : {} MB ({:.1f} GB)'.format(summary.config.memorySizeMB, (float(summary.config.memorySizeMB) / 1024)))
     print('[VM] Memory Shared             : {:.0f} %, {:.0f} MB'.format(
         ((memoryShared / summary.config.memorySizeMB) * 100), memoryShared))
     print('[VM] Memory Balloon            : {:.0f} %, {:.0f} MB'.format(
