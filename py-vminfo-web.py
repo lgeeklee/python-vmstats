@@ -147,7 +147,7 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict):
 
     print('<p>NOTE: Any VM statistics are averages of the last {} minutes<p>'.format(statInt / 3))
     print('<p>Virtual Machine Core Information</p>')
-    html_table('Virtual Machine Name', summary.config.name)
+    html_table('Virtual Machine Name', '<b> {} </b>'.format(summary.config.name))
     html_table('Descrption', summary.config.annotation)
     html_table('Path', summary.config.vmPathName)
     html_table('Guest', summary.config.guestFullName)
