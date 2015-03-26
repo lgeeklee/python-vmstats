@@ -3,7 +3,7 @@ python-vmstats
 
 Python script using pyVmomi to get VM statistics
 
-Command line version:
+<b>Command line version:</b>
 
 http://www.geeklee.co.uk/python-pyvmomi-get-vm-statistics-from-hypervisor/
 
@@ -23,7 +23,8 @@ The script requires the following parameters:
 
 The -p/--password is now optional and if not provided on the command line will prompt instead.
 
-The web version:
+
+<b>The web version:</b>
 
 http://www.geeklee.co.uk/web-python-pyvmomi-vm-statistics-hypervisor/
 
