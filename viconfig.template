@@ -10,13 +10,12 @@ def GetArgs():
     args = dict(host='',
                 port=443,
                 user='',
-                password='',
-                interval=int(form['vminterval'].value))
+                password='',)
 
     return args
 
 def main():
-    # my code here
+    pass
 
 if __name__ == "__main__":
     main()

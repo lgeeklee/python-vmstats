@@ -268,7 +268,7 @@ def main():
         #Find VM supplied as arg and use Managed Object Reference (moref) for the PrintVmInfo
         for vm in retProps:
             if (vm['name'] in vmnames) and (vm['runtime.powerState'] == "poweredOn"):
-                PrintVmInfo(vm['moref'], content, vchtime, args['interval'], perf_dict)
+                PrintVmInfo(vm['moref'], content, vchtime, form['vminterval'].value, perf_dict)
             elif vm['name'] in vmnames:
                 print('ERROR: Problem connecting to Virtual Machine.  {} is likely powered off or suspended'.format(vm['name']))
 
