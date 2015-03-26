@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# -*- coding: UTF-8 -*-
+
 
 """
 Python program that generates various statistics for one or more virtual machines
@@ -11,26 +13,13 @@ from pyVim.connect import SmartConnect, Disconnect
 from pyVmomi import vmodl, vim
 from datetime import timedelta, datetime
 
-import argparse
 import atexit
 import getpass
+import cgi
+import viconfig
 
-
-def GetArgs():
-    """
-    Supports the command-line arguments listed below.
-    """
-    parser = argparse.ArgumentParser(description='Process args for retrieving all the Virtual Machines')
-    parser.add_argument('-s', '--host', required=True, action='store', help='Remote host to connect to')
-    parser.add_argument('-o', '--port', type=int, default=443, action='store', help='Port to connect on')
-    parser.add_argument('-u', '--user', required=True, action='store', help='User name to use when connecting to host')
-    parser.add_argument('-p', '--password', required=False, action='store',
-                        help='Password to use when connecting to host')
-    parser.add_argument('-m', '--vm', required=True, action='store', help='On eor more Virtual Machines to report on')
-    parser.add_argument('-i', '--interval', type=int, default=15, action='store',
-                        help='Interval to average the vSphere stats over')
-    args = parser.parse_args()
-    return args
+form = cgi.FieldStorage()
+print("Content-Type: text/html;charset=utf-8\n\n")
 
 
 def BuildQuery(content, vchtime, counterId, instance, vm, interval):
@@ -53,8 +42,15 @@ def BuildQuery(content, vchtime, counterId, instance, vm, interval):
         exit()
 
 
+def html_table(vm_property, vm_value):
+    print('<tr>')
+    print('<td width="40%"><b>' + vm_property + '</b></td>')
+    print('<td width="60%">' + str(vm_value) + '</td>')
+    print('</tr>')
 
-def PrintVmInfo(vm, content, vchtime, interval, perf_dict, ):
+
+
+def PrintVmInfo(vm, content, vchtime, interval, perf_dict):
     statInt = interval * 3  # There are 3 20s samples in each minute
     summary = vm.summary
 
@@ -116,44 +112,92 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict, ):
     statNetworkRx = BuildQuery(content, vchtime, (StatCheck(perf_dict, 'net.received.average')), "", vm, interval)
     networkRx = (float(sum(statNetworkRx[0].value[0].value) * 8 / 1024) / statInt)
 
-    print('\nNOTE: Any VM statistics are averages of the last {} minutes\n'.format(statInt / 3))
-    print('Server Name                    :', summary.config.name)
-    print('Description                    :', summary.config.annotation)
-    print('Path                           :', summary.config.vmPathName)
-    print('Guest                          :', summary.config.guestFullName)
-    print('[VM] Limits                    : CPU: {}, Memory: {}'.format(vmcpulimit, vmmemlimit))
-    print('[VM] Reservations              : CPU: {}, Memory: {}'.format(vmcpures, vmmemres))
-    print('[VM] Number of vCPUs           :', summary.config.numCpu)
-    print('[VM] CPU Ready                 : Average {:.1f} %, Maximum {:.1f} %'.format((cpuReady / 20000 * 100),
-                                                                                       ((float(max(
-                                                                                           statCpuReady[0].value[
-                                                                                               0].value)) / 20000 * 100))))
-    print('[VM] CPU (%)                   : {:.0f} %'.format(cpuUsage))
-    print('[VM] Memory                    : {} MB ({:.1f} GB)'.format(summary.config.memorySizeMB, (float(summary.config.memorySizeMB) / 1024)))
-    print('[VM] Memory Shared             : {:.0f} %, {:.0f} MB'.format(
-        ((memoryShared / summary.config.memorySizeMB) * 100), memoryShared))
-    print('[VM] Memory Balloon            : {:.0f} %, {:.0f} MB'.format(
-        ((memoryBalloon / summary.config.memorySizeMB) * 100), memoryBalloon))
-    print('[VM] Memory Swapped            : {:.0f} %, {:.0f} MB'.format(
-        ((memorySwapped / summary.config.memorySizeMB) * 100), memorySwapped))
-    print('[VM] Memory Active             : {:.0f} %, {:.0f} MB'.format(
-        ((memoryActive / summary.config.memorySizeMB) * 100), memoryActive))
-    print('[VM] Datastore Average IO      : Read: {:.0f} IOPS, Write: {:.0f} IOPS'.format(DatastoreIoRead,
-                                                                                          DatastoreIoWrite))
-    print('[VM] Datastore Average Latency : Read: {:.0f} ms, Write: {:.0f} ms'.format(DatastoreLatRead,
-                                                                                      DatastoreLatWrite))
-    print('[VM] Network Usage             : Transmitted {:.3f} Mbps, Received {:.3f} Mbps'.format(networkTx, networkRx))
-    print('[Host] Name                    : {}'.format(summary.runtime.host.name))
-    print('[Host] CPU Detail              : Processor Sockets: {}, Cores per Socket {}'.format(
+
+    print('''\
+        <style>
+        p {
+            font-family: Verdana, Geneva, sans-serif;
+            font-size: 14px;
+            color: #084B8A;
+            font-weight: bold
+
+        }
+        table {
+            width: 50%;
+            font-family: Verdana, Geneva, sans-serif;
+            font-size: 12px
+        }
+        table,th,td {
+            border: 1px solid white;
+            border-collapse: collapse;
+            padding: 5px;
+        }
+        th {
+            background-color: #084B8A;
+            color: white;
+            text-align: left;
+        }
+        tr:nth-child(odd) {
+            background-color: #EFF5FB;
+        }
+        </style>
+    ''')
+
+    print('<table>')
+
+    print('<p>NOTE: Any VM statistics are averages of the last {} minutes<p>'.format(statInt / 3))
+    print('<p>Virtual Machine Core Information</p>')
+    html_table('Virtual Machine Name', summary.config.name)
+    html_table('Descrption', summary.config.annotation)
+    html_table('Path', summary.config.vmPathName)
+    html_table('Guest', summary.config.guestFullName)
+    html_table('[VM] Limits', 'CPU: {}, Memory: {}'.format(vmcpulimit, vmmemlimit))
+    html_table('[VM] Reservations', 'CPU: {}, Memory: {}'.format(vmcpures, vmmemres))
+    print('</table>')
+    print('<p>vCPU Information</p>')
+    print('<table>')
+    html_table('[VM] Number of vCPUs', summary.config.numCpu)
+    html_table('[VM] CPU Ready', 'Average {:.1f} %, Maximum {:.1f} %'.format((cpuReady / 20000 * 100),
+                                                                             ((float(max(statCpuReady[0].value[0]
+                                                                                         .value)) / 20000 * 100))))
+    html_table('[VM] CPU (%)', '{:.0f} %'.format(cpuUsage))
+    print('</table>')
+    print('<p>Memory Information</p>')
+    print('<table>')
+    html_table('[VM] Memory', '{} MB ({:.1f} GB)'.format(summary.config.memorySizeMB,
+                                                         (float(summary.config.memorySizeMB) / 1024)))
+    html_table('[VM] Memory Shared', '{:.0f} %, {:.0f} MB'.format(((memoryShared / summary.config.memorySizeMB) * 100),
+                                                                  memoryShared))
+    html_table('[VM] Memory Balloon', '{:.0f} %, {:.0f} MB'.format(((memoryBalloon / summary.config.memorySizeMB)
+                                                                    * 100), memoryBalloon))
+    html_table('[VM] Memory Swapped', '{:.0f} %, {:.0f} MB'.format(((memorySwapped / summary.config.memorySizeMB)
+                                                                    * 100), memorySwapped))
+    html_table('[VM] Memory Active', '{:.0f} %, {:.0f} MB'.format(((memoryActive / summary.config.memorySizeMB) * 100),
+                                                                  memoryActive))
+    print('</table>')
+    print('<p>Datastore and Network Information</p>')
+    print('<table>')
+    html_table('[VM] Datastore Average IO', 'Read: {:.0f} IOPS, Write: {:.0f} IOPS'.format(DatastoreIoRead,
+                                                                                           DatastoreIoWrite))
+    html_table('[VM] Datastore Average Latency', 'Read: {:.0f} ms, Write: {:.0f} ms'.format(DatastoreLatRead,
+                                                                                            DatastoreLatWrite))
+    html_table('[VM] Network Usage', 'Transmitted {:.3f} Mbps, Received {:.3f} Mbps'.format(networkTx, networkRx))
+    print('</table>')
+    print('<p>Parent Host Information</p>')
+    print('<table>')
+    html_table('[Host] Name', summary.runtime.host.name)
+    html_table('[Host] CPU Detail', 'Processor Sockets: {}, Cores per Socket {}'.format(
         summary.runtime.host.summary.hardware.numCpuPkgs,
         (summary.runtime.host.summary.hardware.numCpuCores / summary.runtime.host.summary.hardware.numCpuPkgs)))
-    print('[Host] CPU Type                : {}'.format(summary.runtime.host.summary.hardware.cpuModel))
-    print('[Host] CPU Usage               : Used: {} Mhz, Total: {} Mhz'.format(
+    html_table('[Host] CPU Type', summary.runtime.host.summary.hardware.cpuModel)
+    html_table('[Host] CPU Usage', 'Used: {} Mhz, Total: {} Mhz'.format(
         summary.runtime.host.summary.quickStats.overallCpuUsage,
         (summary.runtime.host.summary.hardware.cpuMhz * summary.runtime.host.summary.hardware.numCpuCores)))
-    print('[Host] Memory Usage            : Used: {:.0f} GB, Total: {:.0f} GB\n'.format(
+    html_table('[Host] Memory Usage ', 'Used: {:.0f} GB, Total: {:.0f} GB\n'.format(
         (float(summary.runtime.host.summary.quickStats.overallMemoryUsage) / 1024),
         (float(summary.runtime.host.summary.hardware.memorySize) / 1024 / 1024 / 1024)))
+
+    print('</table>')
 
 
 def StatCheck(perf_dict, counter_name):
@@ -188,19 +232,19 @@ def GetProperties(content, viewType, props, specType):
 
 
 def main():
-    args = GetArgs()
+    args = viconfig.GetArgs()
     try:
-        vmnames = args.vm
+        vmnames = form['vmname'].value
         si = None
-        if args.password:
-            password = args.password
+        if args['password']:
+            password = args['password']
         else:
-            password = getpass.getpass(prompt="Enter password for host {} and user {}: ".format(args.host, args.user))
+            password = getpass.getpass(prompt="Enter password for host {} and user {}: ".format(args['host'], args['user']))
         try:
-            si = SmartConnect(host=args.host,
-                              user=args.user,
+            si = SmartConnect(host=args['host'],
+                              user=args['user'],
                               pwd=password,
-                              port=int(args.port))
+                              port=int(args['port']))
         except IOError as e:
             pass
         if not si:
@@ -224,7 +268,7 @@ def main():
         #Find VM supplied as arg and use Managed Object Reference (moref) for the PrintVmInfo
         for vm in retProps:
             if (vm['name'] in vmnames) and (vm['runtime.powerState'] == "poweredOn"):
-                PrintVmInfo(vm['moref'], content, vchtime, args.interval, perf_dict)
+                PrintVmInfo(vm['moref'], content, vchtime, args['interval'], perf_dict)
             elif vm['name'] in vmnames:
                 print('ERROR: Problem connecting to Virtual Machine.  {} is likely powered off or suspended'.format(vm['name']))
 

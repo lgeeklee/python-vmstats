@@ -1,0 +1,22 @@
+#!/usr/bin/env python
+# -*- coding: UTF-8 -*-
+
+
+def GetArgs():
+    """
+    Supports the command-line arguments listed below.
+    """
+
+    args = dict(host='vmvca.homelab.local',
+                port=443,
+                user='svc-pyvinga',
+                password='Password12345',
+                interval=int(form['vminterval'].value))
+
+    return args
+
+def main():
+    # my code here
+
+if __name__ == "__main__":
+    main()
