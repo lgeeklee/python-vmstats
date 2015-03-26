@@ -7,10 +7,10 @@ def GetArgs():
     Supports the command-line arguments listed below.
     """
 
-    args = dict(host='vmvca.homelab.local',
+    args = dict(host='',
                 port=443,
-                user='svc-pyvinga',
-                password='Password12345',
+                user='',
+                password='',
                 interval=int(form['vminterval'].value))
 
     return args
