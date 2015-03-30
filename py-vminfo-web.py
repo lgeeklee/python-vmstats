@@ -73,6 +73,16 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict):
     else:
         vmmemres = "{} MB".format(vm.resourceConfig.memoryAllocation.reservation)
 
+    disk_list = []
+    vm_hardware = vm.config.hardware
+    for each_vm_hardware in vm_hardware.device:
+        if each_vm_hardware._wsdlName == 'VirtualDisk':
+            disk_list.append('{} | {:.1f}GB | {} | Thin: {}'.format(each_vm_hardware.deviceInfo.label,
+                                                         each_vm_hardware.capacityInKB/1024/1024,
+                                                         each_vm_hardware.backing.fileName,
+                                                         each_vm_hardware.backing.thinProvisioned))
+    disk_output = '\n'.join(disk_list)
+
     #CPU Ready Average
     statCpuReady = BuildQuery(content, vchtime, (StatCheck(perf_dict, 'cpu.ready.summation')), "", vm, interval)
     cpuReady = (float(sum(statCpuReady[0].value[0].value)) / statInt)
@@ -149,7 +159,7 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict):
     print('<p>Virtual Machine Core Information</p>')
     html_table('Virtual Machine Name', '<b> {} </b>'.format(summary.config.name))
     html_table('Descrption', summary.config.annotation)
-    html_table('Path', summary.config.vmPathName)
+    html_table('Path', disk_output)
     html_table('Guest', summary.config.guestFullName)
     html_table('[VM] Limits', 'CPU: {}, Memory: {}'.format(vmcpulimit, vmmemlimit))
     html_table('[VM] Reservations', 'CPU: {}, Memory: {}'.format(vmcpures, vmmemres))
