@@ -164,7 +164,7 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict, ):
         network_list.pop(0)
         for each_network in network_list:
             print('                                ', each_network)
-    print('[VM] Network Usage             : Transmitted {:.3f} Mbps, Received {:.3f} Mbps'.format(networkTx, networkRx))
+    print('[VM] Overall Network Usage     : Transmitted {:.3f} Mbps, Received {:.3f} Mbps'.format(networkTx, networkRx))
     print('[Host] Name                    : {}'.format(summary.runtime.host.name))
     print('[Host] CPU Detail              : Processor Sockets: {}, Cores per Socket {}'.format(
         summary.runtime.host.summary.hardware.numCpuPkgs,

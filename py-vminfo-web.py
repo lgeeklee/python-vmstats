@@ -201,7 +201,7 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict):
     print('<p>Network Information</p>')
     print('<table>')
     html_table('[VM] Network', network_output)
-    html_table('[VM] Network Usage', 'Transmitted {:.3f} Mbps, Received {:.3f} Mbps'.format(networkTx, networkRx))
+    html_table('[VM] Overall Network Usage', 'Transmitted {:.3f} Mbps, Received {:.3f} Mbps'.format(networkTx, networkRx))
     print('</table>')
     print('<p>Parent Host Information</p>')
     print('<table>')
