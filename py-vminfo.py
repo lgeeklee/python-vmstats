@@ -77,6 +77,15 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict, ):
     else:
         vmmemres = "{} MB".format(vm.resourceConfig.memoryAllocation.reservation)
 
+    disk_list = []
+    vm_hardware = vm.config.hardware
+    for each_vm_hardware in vm_hardware.device:
+        if each_vm_hardware._wsdlName == 'VirtualDisk':
+            disk_list.append('{} | {:.1f}GB | {} | Thin: {}'.format(each_vm_hardware.deviceInfo.label,
+                                                         each_vm_hardware.capacityInKB/1024/1024,
+                                                         each_vm_hardware.backing.fileName,
+                                                         each_vm_hardware.backing.thinProvisioned))
+
     #CPU Ready Average
     statCpuReady = BuildQuery(content, vchtime, (StatCheck(perf_dict, 'cpu.ready.summation')), "", vm, interval)
     cpuReady = (float(sum(statCpuReady[0].value[0].value)) / statInt)
@@ -119,7 +128,11 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict, ):
     print('\nNOTE: Any VM statistics are averages of the last {} minutes\n'.format(statInt / 3))
     print('Server Name                    :', summary.config.name)
     print('Description                    :', summary.config.annotation)
-    print('Path                           :', summary.config.vmPathName)
+    print('Path                           :', disk_list[0])
+    if len(disk_list) > 1:
+        disk_list.pop(0)
+        for each_disk in disk_list:
+            print('                                ', each_disk)
     print('Guest                          :', summary.config.guestFullName)
     print('[VM] Limits                    : CPU: {}, Memory: {}'.format(vmcpulimit, vmmemlimit))
     print('[VM] Reservations              : CPU: {}, Memory: {}'.format(vmcpures, vmmemres))
