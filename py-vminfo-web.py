@@ -81,7 +81,7 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict):
                                                          each_vm_hardware.capacityInKB/1024/1024,
                                                          each_vm_hardware.backing.fileName,
                                                          each_vm_hardware.backing.thinProvisioned))
-    disk_output = '\n'.join(disk_list)
+    disk_output = '<br/>'.join(disk_list)
 
     #CPU Ready Average
     statCpuReady = BuildQuery(content, vchtime, (StatCheck(perf_dict, 'cpu.ready.summation')), "", vm, interval)
