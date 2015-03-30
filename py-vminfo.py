@@ -77,6 +77,10 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict, ):
     else:
         vmmemres = "{} MB".format(vm.resourceConfig.memoryAllocation.reservation)
 
+    network_list = []
+    for each_vm_network in vm.network:
+        network_list.append(each_vm_network.name)
+
     disk_list = []
     vm_hardware = vm.config.hardware
     for each_vm_hardware in vm_hardware.device:
@@ -155,6 +159,11 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict, ):
                                                                                           DatastoreIoWrite))
     print('[VM] Datastore Average Latency : Read: {:.0f} ms, Write: {:.0f} ms'.format(DatastoreLatRead,
                                                                                       DatastoreLatWrite))
+    print('[VM] Network                   :', network_list[0])
+    if len(network_list) > 1:
+        network_list.pop(0)
+        for each_network in network_list:
+            print('                                ', each_network)
     print('[VM] Network Usage             : Transmitted {:.3f} Mbps, Received {:.3f} Mbps'.format(networkTx, networkRx))
     print('[Host] Name                    : {}'.format(summary.runtime.host.name))
     print('[Host] CPU Detail              : Processor Sockets: {}, Cores per Socket {}'.format(

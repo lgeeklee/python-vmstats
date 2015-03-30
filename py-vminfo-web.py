@@ -73,6 +73,12 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict):
     else:
         vmmemres = "{} MB".format(vm.resourceConfig.memoryAllocation.reservation)
 
+    network_list = []
+    for each_vm_network in vm.network:
+        network_list.append(each_vm_network.name)
+
+    network_output = '<br/>'.join(network_list)
+
     disk_list = []
     vm_hardware = vm.config.hardware
     for each_vm_hardware in vm_hardware.device:
@@ -133,7 +139,7 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict):
 
         }
         table {
-            width: 50%;
+            width: 70%;
             font-family: Verdana, Geneva, sans-serif;
             font-size: 12px
         }
@@ -185,12 +191,16 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict):
     html_table('[VM] Memory Active', '{:.0f} %, {:.0f} MB'.format(((memoryActive / summary.config.memorySizeMB) * 100),
                                                                   memoryActive))
     print('</table>')
-    print('<p>Datastore and Network Information</p>')
+    print('<p>Datastore Information</p>')
     print('<table>')
     html_table('[VM] Datastore Average IO', 'Read: {:.0f} IOPS, Write: {:.0f} IOPS'.format(DatastoreIoRead,
                                                                                            DatastoreIoWrite))
     html_table('[VM] Datastore Average Latency', 'Read: {:.0f} ms, Write: {:.0f} ms'.format(DatastoreLatRead,
                                                                                             DatastoreLatWrite))
+    print('</table>')
+    print('<p>Network Information</p>')
+    print('<table>')
+    html_table('[VM] Network', network_output)
     html_table('[VM] Network Usage', 'Transmitted {:.3f} Mbps, Received {:.3f} Mbps'.format(networkTx, networkRx))
     print('</table>')
     print('<p>Parent Host Information</p>')
