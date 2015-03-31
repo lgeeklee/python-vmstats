@@ -53,6 +53,8 @@ def html_table(vm_property, vm_value):
 def PrintVmInfo(vm, content, vchtime, interval, perf_dict):
     statInt = interval * 3  # There are 3 20s samples in each minute
     summary = vm.summary
+    disk_list = []
+    network_list = []
 
     # Convert limit and reservation values from -1 to None
     if vm.resourceConfig.cpuAllocation.limit == -1:
@@ -73,8 +75,6 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict):
     else:
         vmmemres = "{} MB".format(vm.resourceConfig.memoryAllocation.reservation)
 
-    disk_list = []
-    network_list = []
     vm_hardware = vm.config.hardware
     for each_vm_hardware in vm_hardware.device:
         if (each_vm_hardware.key >= 2000) and (each_vm_hardware.key < 3000):
@@ -167,6 +167,10 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict):
     html_table('Virtual Machine Name', '<b> {} </b>'.format(summary.config.name))
     html_table('Descrption', summary.config.annotation)
     html_table('Guest', summary.config.guestFullName)
+    if vm.rootSnapshot:
+        html_table('Snapshot Status', 'Snapshots present')
+    else:
+        html_table('Snapshot Status', 'No Snapshots')
     html_table('VM .vmx Path', summary.config.vmPathName)
     html_table('Virtual Disks', disk_output)
     html_table('Virtual NIC(s)', network_output)

@@ -57,6 +57,8 @@ def BuildQuery(content, vchtime, counterId, instance, vm, interval):
 def PrintVmInfo(vm, content, vchtime, interval, perf_dict, ):
     statInt = interval * 3  # There are 3 20s samples in each minute
     summary = vm.summary
+    disk_list = []
+    network_list = []
 
     # Convert limit and reservation values from -1 to None
     if vm.resourceConfig.cpuAllocation.limit == -1:
@@ -77,8 +79,6 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict, ):
     else:
         vmmemres = "{} MB".format(vm.resourceConfig.memoryAllocation.reservation)
 
-    disk_list = []
-    network_list = []
     vm_hardware = vm.config.hardware
     for each_vm_hardware in vm_hardware.device:
         if (each_vm_hardware.key >= 2000) and (each_vm_hardware.key < 3000):
@@ -134,6 +134,10 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict, ):
     print('Server Name                    :', summary.config.name)
     print('Description                    :', summary.config.annotation)
     print('Guest                          :', summary.config.guestFullName)
+    if vm.rootSnapshot:
+        print('Snapshot Status                : Snapshots present')
+    else:
+        print('Snapshot Status                : No Snapshots')
     print('VM .vmx Path                   :', summary.config.vmPathName)
     print('Virtual Disks                  :', disk_list[0])
     if len(disk_list) > 1:
