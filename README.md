@@ -7,7 +7,7 @@ Python script using pyVmomi to get VM statistics
 
 http://www.geeklee.co.uk/python-pyvmomi-get-vm-statistics-from-hypervisor/
 
-<img src="http://www.geeklee.co.uk/wp-content/uploads/2014/04/vm-win-stats-py2.png" alt="Example output">
+<img src="http://www.geeklee.co.uk/wp-content/uploads/2015/03/vm-win-stats-py3.png" alt="Example output">
 
 The script requires the following parameters:
 
@@ -28,7 +28,7 @@ The -p/--password is now optional and if not provided on the command line will p
 
 http://www.geeklee.co.uk/web-python-pyvmomi-vm-statistics-hypervisor/
 
-<img src="http://www.geeklee.co.uk/wp-content/uploads/2015/03/python-vmstats-web1.png" alt="Example output">
+<img src="http://www.geeklee.co.uk/wp-content/uploads/2015/03/python-vmstats-web2.png" alt="Example output">
 
 
 http://www.geeklee.co.uk/object-properties-containerview-pyvmomi/
