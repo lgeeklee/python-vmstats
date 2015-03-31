@@ -73,21 +73,21 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict):
     else:
         vmmemres = "{} MB".format(vm.resourceConfig.memoryAllocation.reservation)
 
-    network_list = []
-    for each_vm_network in vm.network:
-        network_list.append(each_vm_network.name)
-
-    network_output = '<br/>'.join(network_list)
-
     disk_list = []
+    network_list = []
     vm_hardware = vm.config.hardware
     for each_vm_hardware in vm_hardware.device:
-        if each_vm_hardware._wsdlName == 'VirtualDisk':
+        if (each_vm_hardware.key >= 2000) and (each_vm_hardware.key < 3000):
             disk_list.append('{} | {:.1f}GB | {} | Thin: {}'.format(each_vm_hardware.deviceInfo.label,
                                                          each_vm_hardware.capacityInKB/1024/1024,
                                                          each_vm_hardware.backing.fileName,
                                                          each_vm_hardware.backing.thinProvisioned))
+        elif (each_vm_hardware.key >= 4000) and (each_vm_hardware.key < 5000):
+            network_list.append('{} | {} | {}'.format(each_vm_hardware.deviceInfo.label,
+                                                         each_vm_hardware.deviceInfo.summary,
+                                                         each_vm_hardware.macAddress))
     disk_output = '<br/>'.join(disk_list)
+    network_output = '<br/>'.join(network_list)
 
     #CPU Ready Average
     statCpuReady = BuildQuery(content, vchtime, (StatCheck(perf_dict, 'cpu.ready.summation')), "", vm, interval)
@@ -165,21 +165,20 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict):
     print('<p>Virtual Machine Core Information</p>')
     html_table('Virtual Machine Name', '<b> {} </b>'.format(summary.config.name))
     html_table('Descrption', summary.config.annotation)
-    html_table('Path', disk_output)
+    html_table('vVM .vmx Path', summary.config.vmPathName)
+    html_table('Virtual Disks', disk_output)
     html_table('Guest', summary.config.guestFullName)
+    html_table('Virtual NIC(s)', network_output)
+    print('</table>')
+    print('<p>vCPU and Memory Information</p>')
+    print('<table>')
     html_table('[VM] Limits', 'CPU: {}, Memory: {}'.format(vmcpulimit, vmmemlimit))
     html_table('[VM] Reservations', 'CPU: {}, Memory: {}'.format(vmcpures, vmmemres))
-    print('</table>')
-    print('<p>vCPU Information</p>')
-    print('<table>')
     html_table('[VM] Number of vCPUs', summary.config.numCpu)
     html_table('[VM] CPU Ready', 'Average {:.1f} %, Maximum {:.1f} %'.format((cpuReady / 20000 * 100),
                                                                              ((float(max(statCpuReady[0].value[0]
                                                                                          .value)) / 20000 * 100))))
     html_table('[VM] CPU (%)', '{:.0f} %'.format(cpuUsage))
-    print('</table>')
-    print('<p>Memory Information</p>')
-    print('<table>')
     html_table('[VM] Memory', '{} MB ({:.1f} GB)'.format(summary.config.memorySizeMB,
                                                          (float(summary.config.memorySizeMB) / 1024)))
     html_table('[VM] Memory Shared', '{:.0f} %, {:.0f} MB'.format(((memoryShared / summary.config.memorySizeMB) * 100),
@@ -191,16 +190,12 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict):
     html_table('[VM] Memory Active', '{:.0f} %, {:.0f} MB'.format(((memoryActive / summary.config.memorySizeMB) * 100),
                                                                   memoryActive))
     print('</table>')
-    print('<p>Datastore Information</p>')
+    print('<p>Datastore and Network Information</p>')
     print('<table>')
     html_table('[VM] Datastore Average IO', 'Read: {:.0f} IOPS, Write: {:.0f} IOPS'.format(DatastoreIoRead,
                                                                                            DatastoreIoWrite))
     html_table('[VM] Datastore Average Latency', 'Read: {:.0f} ms, Write: {:.0f} ms'.format(DatastoreLatRead,
                                                                                             DatastoreLatWrite))
-    print('</table>')
-    print('<p>Network Information</p>')
-    print('<table>')
-    html_table('[VM] Network', network_output)
     html_table('[VM] Overall Network Usage', 'Transmitted {:.3f} Mbps, Received {:.3f} Mbps'.format(networkTx, networkRx))
     print('</table>')
     print('<p>Parent Host Information</p>')
