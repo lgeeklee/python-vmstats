@@ -165,10 +165,10 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict):
     print('<p>NOTE: Any VM statistics are averages of the last {} minutes<p>'.format(statInt / 3))
     print('<p>Core Information</p>')
     html_table('Virtual Machine Name', '<b> {} </b>'.format(summary.config.name))
-    html_table('Descrption', summary.config.annotation)
+    html_table('Description', summary.config.annotation)
     html_table('Guest', summary.config.guestFullName)
     if vm.rootSnapshot:
-        html_table('Snapshot Status', 'Snapshots present')
+        html_table('Snapshot Status', 'Snapshot(s) found')
     else:
         html_table('Snapshot Status', 'No Snapshots')
     html_table('VM .vmx Path', summary.config.vmPathName)
