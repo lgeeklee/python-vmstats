@@ -78,14 +78,15 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict):
     vm_hardware = vm.config.hardware
     for each_vm_hardware in vm_hardware.device:
         if (each_vm_hardware.key >= 2000) and (each_vm_hardware.key < 3000):
-            disk_list.append('{} | {:.1f}GB | {} | Thin: {}'.format(each_vm_hardware.deviceInfo.label,
+            disk_list.append('{} | {:.1f}GB | Thin: {} | {}'.format(each_vm_hardware.deviceInfo.label,
                                                          each_vm_hardware.capacityInKB/1024/1024,
-                                                         each_vm_hardware.backing.fileName,
-                                                         each_vm_hardware.backing.thinProvisioned))
+                                                         each_vm_hardware.backing.thinProvisioned,
+                                                         each_vm_hardware.backing.fileName))
         elif (each_vm_hardware.key >= 4000) and (each_vm_hardware.key < 5000):
             network_list.append('{} | {} | {}'.format(each_vm_hardware.deviceInfo.label,
                                                          each_vm_hardware.deviceInfo.summary,
                                                          each_vm_hardware.macAddress))
+
     disk_output = '<br/>'.join(disk_list)
     network_output = '<br/>'.join(network_list)
 
