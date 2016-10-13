@@ -15,6 +15,7 @@ import argparse
 import atexit
 import getpass
 
+import ssl
 
 def GetArgs():
     """
@@ -27,6 +28,7 @@ def GetArgs():
     parser.add_argument('-p', '--password', required=False, action='store',
                         help='Password to use when connecting to host')
     parser.add_argument('-m', '--vm', required=True, action='store', help='On eor more Virtual Machines to report on')
+    parser.add_argument('-c', '--cert_check_skip', required=False, action='store_true', help='skip ssl certificate check')
     parser.add_argument('-i', '--interval', type=int, default=15, action='store',
                         help='Interval to average the vSphere stats over')
     args = parser.parse_args()
@@ -139,11 +141,14 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict, ):
     else:
         print('Snapshot Status                : No Snapshots')
     print('VM .vmx Path                   :', summary.config.vmPathName)
-    print('Virtual Disks                  :', disk_list[0])
-    if len(disk_list) > 1:
-        disk_list.pop(0)
-        for each_disk in disk_list:
-            print('                                ', each_disk)
+    try:
+        print('Virtual Disks                  :', disk_list[0])
+        if len(disk_list) > 1:
+            disk_list.pop(0)
+            for each_disk in disk_list:
+                print('                                ', each_disk)
+    except IndexError:
+        pass
     print('Virtual NIC(s)                 :', network_list[0])
     if len(network_list) > 1:
         network_list.pop(0)
@@ -225,10 +230,18 @@ def main():
         else:
             password = getpass.getpass(prompt="Enter password for host {} and user {}: ".format(args.host, args.user))
         try:
-            si = SmartConnect(host=args.host,
-                              user=args.user,
-                              pwd=password,
-                              port=int(args.port))
+            if args.cert_check_skip:
+                context = ssl._create_unverified_context()
+                si = SmartConnect(host=args.host,
+                                  user=args.user,
+                                  pwd=password,
+                                  port=int(args.port),
+                                  sslContext=context)
+            else:
+                si = SmartConnect(host=args.host,
+                                  user=args.user,
+                                  pwd=password,
+                                  port=int(args.port))
         except IOError as e:
             pass
         if not si:
