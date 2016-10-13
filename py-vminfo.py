@@ -15,6 +15,7 @@ import argparse
 import atexit
 import getpass
 
+import ssl
 
 def GetArgs():
     """
@@ -139,11 +140,14 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict, ):
     else:
         print('Snapshot Status                : No Snapshots')
     print('VM .vmx Path                   :', summary.config.vmPathName)
-    print('Virtual Disks                  :', disk_list[0])
-    if len(disk_list) > 1:
-        disk_list.pop(0)
-        for each_disk in disk_list:
-            print('                                ', each_disk)
+    try:
+        print('Virtual Disks                  :', disk_list[0])
+        if len(disk_list) > 1:
+            disk_list.pop(0)
+            for each_disk in disk_list:
+                print('                                ', each_disk)
+    except IndexError:
+        pass
     print('Virtual NIC(s)                 :', network_list[0])
     if len(network_list) > 1:
         network_list.pop(0)
@@ -225,10 +229,12 @@ def main():
         else:
             password = getpass.getpass(prompt="Enter password for host {} and user {}: ".format(args.host, args.user))
         try:
+            context = ssl._create_unverified_context()
             si = SmartConnect(host=args.host,
                               user=args.user,
                               pwd=password,
-                              port=int(args.port))
+                              port=int(args.port),
+                              sslContext=context)
         except IOError as e:
             pass
         if not si:
