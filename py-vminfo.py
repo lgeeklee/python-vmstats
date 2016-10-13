@@ -28,6 +28,7 @@ def GetArgs():
     parser.add_argument('-p', '--password', required=False, action='store',
                         help='Password to use when connecting to host')
     parser.add_argument('-m', '--vm', required=True, action='store', help='On eor more Virtual Machines to report on')
+    parser.add_argument('-c', '--cert_check_skip', required=False, action='store_true', help='skip ssl certificate check')
     parser.add_argument('-i', '--interval', type=int, default=15, action='store',
                         help='Interval to average the vSphere stats over')
     args = parser.parse_args()
@@ -229,12 +230,18 @@ def main():
         else:
             password = getpass.getpass(prompt="Enter password for host {} and user {}: ".format(args.host, args.user))
         try:
-            context = ssl._create_unverified_context()
-            si = SmartConnect(host=args.host,
-                              user=args.user,
-                              pwd=password,
-                              port=int(args.port),
-                              sslContext=context)
+            if args.cert_check_skip:
+                context = ssl._create_unverified_context()
+                si = SmartConnect(host=args.host,
+                                  user=args.user,
+                                  pwd=password,
+                                  port=int(args.port),
+                                  sslContext=context)
+            else:
+                si = SmartConnect(host=args.host,
+                                  user=args.user,
+                                  pwd=password,
+                                  port=int(args.port))
         except IOError as e:
             pass
         if not si:
