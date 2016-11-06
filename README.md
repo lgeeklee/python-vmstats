@@ -21,6 +21,8 @@ The script requires the following parameters:
 
 -i INT, --interval INT : Interval to average the vSphere stats over in minutes
 
+-c, --cert_check_skip : Skip ssl certificate check
+
 The -p/--password is now optional and if not provided on the command line will prompt instead.
 
 
