@@ -17,6 +17,7 @@ import atexit
 import getpass
 import cgi
 import viconfig
+import ssl
 
 form = cgi.FieldStorage()
 print("Content-Type: text/html;charset=utf-8\n\n")
@@ -261,10 +262,12 @@ def main():
         else:
             password = getpass.getpass(prompt="Enter password for host {} and user {}: ".format(args['host'], args['user']))
         try:
-            si = SmartConnect(host=args['host'],
-                              user=args['user'],
-                              pwd=password,
-                              port=int(args['port']))
+            context = ssl._create_unverified_context()
+            si = SmartConnect(host=args.host,
+                user=args.user,
+                pwd=password,
+                port=int(args.port),
+                sslContext=context)
         except IOError as e:
             pass
         if not si:
