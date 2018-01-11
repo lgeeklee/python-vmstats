@@ -263,10 +263,10 @@ def main():
             password = getpass.getpass(prompt="Enter password for host {} and user {}: ".format(args['host'], args['user']))
         try:
             context = ssl._create_unverified_context()
-            si = SmartConnect(host=args.host,
-                user=args.user,
+            si = SmartConnect(host=args['host'],
+                user=args['user'],
                 pwd=password,
-                port=int(args.port),
+                port=int(args['port']),
                 sslContext=context)
         except IOError as e:
             pass
