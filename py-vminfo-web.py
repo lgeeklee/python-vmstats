@@ -65,7 +65,7 @@ def PrintVmInfo(vm, content, vchtime, interval, perf_dict):
     if vm.resourceConfig.memoryAllocation.limit == -1:
         vmmemlimit = "None"
     else:
-        vmmemlimit = "{} MB".format(vm.resourceConfig.cpuAllocation.limit)
+        vmmemlimit = "{} MB".format(vm.resourceConfig.memoryAllocation.limit)
 
     if vm.resourceConfig.cpuAllocation.reservation == 0:
         vmcpures = "None"
